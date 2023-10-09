@@ -52,14 +52,6 @@ def get_article_links(year, month, day, page_link):
         link = article.a['href']
         url = 'http://paper.people.com.cn/rmrb/html/' + year + '-' + month + '/' + day + '/' + link
         article_links.append(url)
-
-        # tempList = article.find_all('a')
-        # for temp in tempList:
-        #     link = temp["href"]
-        #     if 'nw.D110000renmrb' in link:
-        #         url = 'http://paper.people.com.cn/rmrb/html/' + year + '-' + month + '/' + day + '/' + link
-        #         article_links.append(url)
-
     return article_links
 
 
@@ -142,4 +134,4 @@ if __name__ == '__main__':
             daily_article = get_daily_article(year, month, day, destdir)
             f.write(daily_article)
             print("爬取完成：" + year + month + day)
-            time.sleep(2)        # 怕被封 IP 爬一爬缓一缓，爬的少的话可以注释掉
+            time.sleep(2)
