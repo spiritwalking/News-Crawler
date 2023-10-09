@@ -1,6 +1,8 @@
 import requests
 import os
+import time
 import datetime
+import re
 from bs4 import BeautifulSoup
 
 
@@ -61,7 +63,7 @@ def get_article_links(year, month, day, page_link):
     return article_links
 
 
-def get_content(html):
+def get_article(html):
     """
     解析HTML网页，获取新闻的文章内容
     """
@@ -69,39 +71,40 @@ def get_content(html):
 
     # 获取文章标题
     title = soup.h3.text + '\n' + soup.h1.text + '\n' + soup.h2.text + '\n'
-    # print(title)
 
     # 获取文章内容
     paragraphs = soup.find('div', attrs={'id': 'ozoom'}).find_all('p')
     content = ''
     for p in paragraphs:
         content += p.text + '\n'
-    # print(content)
 
-    resp = title + content
+    resp = title + '!!!!' + content
     return resp
 
 
-def download_rmrb(year, month, day, destdir):
+def get_daily_article(year, month, day, destdir):
     """
     爬取人民日报指定日期的新闻内容，并保存在指定目录下
     """
-    pageList = get_page_links(year, month, day)
-    for page in pageList:
+    articles = ""
+    page_links = get_page_links(year, month, day)
+    for page in page_links:
         article_links = get_article_links(year, month, day, page)
         for url in article_links:
             # 获取新闻文章内容
             html = get_html(url)
-            content = get_content(html)
+            article = get_article(html)
+            cleaned_article = clean_article(article)
+            articles += cleaned_article
+    return articles
 
-            # 生成保存的文件路径及文件名
-            path = destdir + '/' + year + '.txt'
-            if not os.path.exists(destdir):
-                os.makedirs(destdir)
 
-            # 保存文件
-            with open(path, 'w', encoding='utf-8') as f:
-                f.write(content)
+def clean_article(article):
+    if len(article) < 30:
+        return ''
+    else:
+        article = re.sub(r'\s+', '', article)  # 去除空格、换行符等
+        return article+'\n'
 
 
 def gen_dates(base_date, days):
@@ -125,16 +128,18 @@ def get_date_list(begin_date, end_date):
 
 
 if __name__ == '__main__':
-    beginDate = '20210101'
-    endDate = '20210201'
+    beginDate = '20200701'
+    endDate = '20231001'
     data = get_date_list(beginDate, endDate)
 
-    for d in data:
-        year = str(d.year)
-        month = str(d.month) if d.month >= 10 else '0' + str(d.month)
-        day = str(d.day) if d.day >= 10 else '0' + str(d.day)
-        destdir = "data"
+    destdir = "rmrb.txt"
+    with open(destdir, 'w', encoding='utf-8') as f:
+        for d in data:
+            year = str(d.year)
+            month = str(d.month) if d.month >= 10 else '0' + str(d.month)
+            day = str(d.day) if d.day >= 10 else '0' + str(d.day)
 
-        download_rmrb(year, month, day, destdir)
-        print("爬取完成：" + year + month + day)
-#         time.Sleep(3)        # 怕被封 IP 爬一爬缓一缓，爬的少的话可以注释掉
+            daily_article = get_daily_article(year, month, day, destdir)
+            f.write(daily_article)
+            print("爬取完成：" + year + month + day)
+            time.sleep(2)        # 怕被封 IP 爬一爬缓一缓，爬的少的话可以注释掉
