@@ -1,8 +1,12 @@
 import logging
+import re
 from time import sleep
+
+import requests
 from lxml import etree
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from tqdm import tqdm
 
 
 def create_logger(log_path):
@@ -43,24 +47,12 @@ class Crawler:
         """爬虫主程序"""
         self.logger.info('开始爬取')
         for column in self.column_list:
-            self.logger.info('爬取栏目: {}...'.format(column))
+            self.logger.info('爬取栏目 {}...'.format(column))
             self.process_column(column)
 
         # 将所有文章链接存储到文件中
         with open('links.txt', 'w') as f:
             f.write('\n'.join(self.article_links))
-
-        # 读取文章链接
-        # with open('links.txt', 'r') as f:
-        #     links_str = f.read()
-        #     links = links_str.split('\n')
-        #
-        # with open('global_times.txt', 'w') as f:
-        #     try:
-        #         for link in links:
-        #             f.write(self.process_passage(link))
-        #     except Exception as e:
-        #         self.logger.error('处理文章失败，错误信息: {}'.format(e))
 
         self.browser.quit()
         self.logger.info('爬取完成')
@@ -95,33 +87,48 @@ class Crawler:
                 ret_list.append(link)
         return ret_list
 
-    def process_passage(self, link):
-        """爬取文章内容"""
-        self.browser.get(link)
-        sleep(self.page_wait_time)
-        source = self.browser.page_source
-        html_tree = etree.HTML(source)
 
-        content_lst = html_tree.xpath(
-            '//div[@class="article_page"]//div[@class="article"]//div[@class="article_content"]//div[@class="article_right"]/br')
-        # 找不到文章内容直接退出
-        if not content_lst:
-            self.logger.info('文章爬取失败')
-            return ''
+def download_articles():
+    # 读取文章链接
+    with open('links.txt', 'r') as f:
+        links_str = f.read()
+        links = links_str.split('\n')
 
-        # 获取文章内容
-        content = ''
-        for one_content in content_lst:
-            if one_content.tail:
-                content = content + '\n' + one_content.tail.strip()
+    with open('global_times.txt', 'w') as f:
+        try:
+            for link in tqdm(links):
+                f.write(process_passage(link))
+        except Exception as e:
+            print('处理文章失败，错误信息: {}'.format(e))
 
-        print(content)
-        self.logger.info('文章爬取完成')
-        return content
+
+def process_passage(link):
+    """爬取文章内容"""
+    # sleep(1)
+    r = requests.get(link)
+    html_tree = etree.HTML(r.text)
+
+    content_lst = html_tree.xpath(
+        '//div[@class="article_page"]//div[@class="article"]//div[@class="article_content"]//div[@class="article_right"]//br')
+    # 找不到文章内容直接退出
+    if not content_lst:
+        return ''
+
+    # 获取文章内容
+    content = ''
+    for one_content in content_lst:
+        if one_content.tail:
+            content = content + one_content.tail.strip()
+
+    content = re.sub(r'\n', '', content)
+    # print(content)
+    return content + '\n'
 
 
 if __name__ == '__main__':
-    column_list = ['sport', 'life', 'world', 'In-depth', 'opinion', 'source', 'china']
-
-    globaltimes_crawler = Crawler('https://www.globaltimes.cn/', column_list, 10)
-    globaltimes_crawler.crawl()
+    # column_list = ['sport', 'life', 'world', 'In-depth', 'opinion', 'source', 'china']
+    #
+    # globaltimes_crawler = Crawler('https://www.globaltimes.cn/', column_list, 10)
+    # globaltimes_crawler.crawl()
+    download_articles()
+    # process_passage('https://www.globaltimes.cn/page/202308/1296884.shtml')
