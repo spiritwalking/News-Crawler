@@ -51,7 +51,7 @@ class Crawler:
             self.process_column(column)
 
         # 将所有文章链接存储到文件中
-        with open('links.txt', 'w') as f:
+        with open('data/global_times_links.txt', 'w') as f:
             f.write('\n'.join(self.article_links))
 
         self.browser.quit()
@@ -90,11 +90,11 @@ class Crawler:
 
 def download_articles():
     # 读取文章链接
-    with open('links.txt', 'r') as f:
+    with open('data/global_times_links.txt', 'r') as f:
         links_str = f.read()
         links = links_str.split('\n')
 
-    with open('global_times.txt', 'w') as f:
+    with open('data/global_times.txt', 'w') as f:
         try:
             for link in tqdm(links):
                 f.write(process_passage(link))
@@ -131,4 +131,3 @@ if __name__ == '__main__':
     # globaltimes_crawler = Crawler('https://www.globaltimes.cn/', column_list, 10)
     # globaltimes_crawler.crawl()
     download_articles()
-    # process_passage('https://www.globaltimes.cn/page/202308/1296884.shtml')

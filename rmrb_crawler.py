@@ -118,7 +118,7 @@ if __name__ == '__main__':
     endDate = '20231001'
     data = get_date_list(beginDate, endDate)
 
-    destdir = "rmrb.txt"
+    destdir = "data/rmrb.txt"
     with open(destdir, 'w', encoding='utf-8') as f:
         for d in data:
             year = str(d.year)

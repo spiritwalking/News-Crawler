@@ -71,11 +71,11 @@ def get_links(page_link):
 
 def save_articles():
     # 读取文章链接
-    with open('china_daily_links.txt', 'r') as f:
+    with open('data/china_daily_links.txt', 'r') as f:
         links_str = f.read()
         links = links_str.split('\n')
 
-    with open('china_daily.txt', 'w') as f:
+    with open('data/china_daily.txt', 'w') as f:
         for link in tqdm(links):
             f.write(get_article(link))
 
@@ -90,7 +90,7 @@ def save_page_links(num_page):
             page_links.extend(get_links(page_url))
 
     page_links = list(set(page_links))  # 去重
-    with open('china_daily_links.txt', 'w') as f:
+    with open('data/china_daily_links.txt', 'w') as f:
         f.write('\n'.join(page_links))
 
 
